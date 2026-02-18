@@ -1,136 +1,96 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Check } from "lucide-react";
+import { Check, Sparkles, TrendingUp, Calendar } from "lucide-react";
 import { getUserId } from "../lib/auth";
-import { saveJournalEntry, JournalEntry, getMoodEntries } from "../lib/db";
-
-interface WeeklyStats {
-  activitiesCompleted: number;
-  moodsLogged: number;
-  streak: number;
-}
+import { saveJournalEntry } from "../lib/db";
 
 const WeeklyReflection = () => {
-  const [stats, setStats] = useState<WeeklyStats>({ activitiesCompleted: 0, moodsLogged: 0, streak: 0 });
   const [entry, setEntry] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const userId = getUserId();
-    if (userId) {
-      Promise.all([
-        getMoodEntries(userId),
-        // We could also get mindfulness sessions here if needed
-      ]).then(([moods]) => {
-        setStats({
-          activitiesCompleted: 0, // Placeholder for now or fetch from mindfulness_sessions
-          moodsLogged: moods.length,
-          streak: 0 // Placeholder
-        });
-        setLoading(false);
-      });
-    }
-  }, []);
-
-  const prompt = "What has changed for you this week?";
-  const canSave = entry.trim().length > 0;
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
     const userId = getUserId();
-    if (!userId || !canSave) return;
-
-    const journalEntry: JournalEntry = {
-      content: entry.trim(),
-      logged_at: new Date().toISOString(),
-      tags: ["weekly"],
-      is_private: true,
-    };
-
-    try {
-      await saveJournalEntry(userId, journalEntry);
-      setSaved(true);
-    } catch (error) {
-      console.error("Failed to save weekly reflection:", error);
+    if (userId && entry.trim()) {
+      setIsSaving(true);
+      try {
+        await saveJournalEntry(userId, {
+          content: entry.trim(),
+          prompt: "Weekly Reflection",
+          logged_at: new Date().toISOString(),
+        });
+        setIsSaved(true);
+      } catch (error) {
+        console.error("Failed to save reflection:", error);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
-  const handleSkip = () => {
-    // In a real app this would navigate away
-    window.history.back();
-  };
-
-  if (saved) {
+  if (isSaved) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 bg-background">
-        <div className="flex flex-col items-center gap-4 animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
-            <Check className="w-8 h-8 text-primary" />
-          </div>
-          <h2 className="text-2xl font-semibold text-foreground">Reflection Saved</h2>
-          <p className="text-muted-foreground text-center max-w-sm">
-            Taking time to reflect is a powerful act of self-care. Well done.
-          </p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 animate-in fade-in zoom-in duration-500">
+        <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+          <Check className="w-10 h-10 text-primary" strokeWidth={3} />
         </div>
+        <div>
+          <h2 className="text-3xl font-bold">Reflection Saved!</h2>
+          <p className="text-muted-foreground mt-2 max-w-xs">Acknowledging your weekly journey helps you grow. Well done.</p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => { setIsSaved(false); setEntry(""); }}
+          className="rounded-full px-8"
+        >
+          Check in again
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-10 bg-background">
-      <div className="w-full max-w-xl flex flex-col gap-6">
-        {/* Title */}
-        <h1 className="text-3xl font-bold text-foreground text-center tracking-tight">
-          Weekly Reflection
-        </h1>
-
-        {/* Weekly Summary Banner */}
-        <div className="summary-card rounded-2xl p-6 border border-border/50">
-          <p className="text-foreground/90 text-center text-base leading-relaxed">
-            This week you completed{" "}
-            <span className="font-semibold text-primary">{stats.activitiesCompleted}</span>{" "}
-            activities, logged{" "}
-            <span className="font-semibold text-primary">{stats.moodsLogged}</span>{" "}
-            moods, and built a{" "}
-            <span className="font-semibold text-primary">{stats.streak}-day</span> streak.
-          </p>
+    <div className="max-w-xl mx-auto space-y-10 py-8 px-4 animate-in fade-in duration-700">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
+          <Calendar className="w-3 h-3" />
+          Weekly Bloom
         </div>
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">How was your week?</h1>
+        <p className="text-muted-foreground text-lg italic">"Looking back with kindness clarifies the path forward."</p>
+      </div>
 
-        {/* Reflective Prompt */}
-        <div className="prompt-card rounded-2xl p-6 border border-border/50">
-          <p className="text-foreground/80 text-center text-lg italic leading-relaxed">
-            "{prompt}"
-          </p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[
+          { icon: Sparkles, label: "Highlights", color: "text-amber" },
+          { icon: TrendingUp, label: "Growth Points", color: "text-emerald" }
+        ].map((item) => (
+          <div key={item.label} className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
+            <div className={`p-2 rounded-lg bg-muted ${item.color}`}>
+              <item.icon className="w-5 h-5" />
+            </div>
+            <span className="font-semibold text-sm">{item.label}</span>
+          </div>
+        ))}
+      </div>
 
-        {/* Text Area */}
+      <div className="space-y-4">
         <Textarea
+          placeholder="Capture your achievements, challenges, and lessons from the past 7 days..."
+          className="min-h-[250px] rounded-3xl border-muted bg-muted/20 p-8 text-lg leading-relaxed focus:bg-background transition-all"
           value={entry}
           onChange={(e) => setEntry(e.target.value)}
-          placeholder="Write your thoughts..."
-          className="rounded-xl min-h-[200px] resize-none text-base bg-card border-border focus-visible:ring-primary/40 p-4"
-          rows={8}
         />
-
-        {/* CTAs */}
-        <div className="flex items-center justify-center gap-4 pt-2">
-          <Button
-            variant="ghost"
-            className="rounded-full px-8 text-muted-foreground hover:text-foreground"
-            onClick={handleSkip}
-          >
-            Skip
-          </Button>
-          <Button
-            className="rounded-full px-8"
-            disabled={!canSave}
-            onClick={handleSave}
-          >
-            Save
-          </Button>
-        </div>
       </div>
+
+      <Button
+        className="w-full h-16 rounded-3xl text-lg font-bold shadow-xl transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+        disabled={!entry.trim() || isSaving}
+        onClick={handleSave}
+      >
+        {isSaving ? "Saving..." : "Save Weekly Reflection"}
+      </Button>
     </div>
   );
 };
