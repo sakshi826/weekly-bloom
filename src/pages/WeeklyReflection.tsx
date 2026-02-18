@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check } from "lucide-react";
+import { getUserId } from "../lib/auth";
+import { saveJournalEntry, JournalEntry, getMoodEntries } from "../lib/db";
 
 interface WeeklyStats {
   activitiesCompleted: number;
@@ -9,43 +11,49 @@ interface WeeklyStats {
   streak: number;
 }
 
-const getWeeklyStats = (): WeeklyStats => {
-  try {
-    const activities = JSON.parse(localStorage.getItem("activities_completed") || "[]");
-    const moods = JSON.parse(localStorage.getItem("mood_logs") || "[]");
-    const streak = parseInt(localStorage.getItem("current_streak") || "0", 10);
-    return {
-      activitiesCompleted: Array.isArray(activities) ? activities.length : 0,
-      moodsLogged: Array.isArray(moods) ? moods.length : 0,
-      streak,
-    };
-  } catch {
-    return { activitiesCompleted: 0, moodsLogged: 0, streak: 0 };
-  }
-};
-
 const WeeklyReflection = () => {
   const [stats, setStats] = useState<WeeklyStats>({ activitiesCompleted: 0, moodsLogged: 0, streak: 0 });
   const [entry, setEntry] = useState("");
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setStats(getWeeklyStats());
+    const userId = getUserId();
+    if (userId) {
+      Promise.all([
+        getMoodEntries(userId),
+        // We could also get mindfulness sessions here if needed
+      ]).then(([moods]) => {
+        setStats({
+          activitiesCompleted: 0, // Placeholder for now or fetch from mindfulness_sessions
+          moodsLogged: moods.length,
+          streak: 0 // Placeholder
+        });
+        setLoading(false);
+      });
+    }
   }, []);
 
   const prompt = "What has changed for you this week?";
   const canSave = entry.trim().length > 0;
 
-  const handleSave = () => {
-    const existing = JSON.parse(localStorage.getItem("journal_entries") || "[]");
-    existing.push({
-      prompt,
-      entry: entry.trim(),
-      date: new Date().toISOString(),
-      type: "weekly",
-    });
-    localStorage.setItem("journal_entries", JSON.stringify(existing));
-    setSaved(true);
+  const handleSave = async () => {
+    const userId = getUserId();
+    if (!userId || !canSave) return;
+
+    const journalEntry: JournalEntry = {
+      content: entry.trim(),
+      logged_at: new Date().toISOString(),
+      tags: ["weekly"],
+      is_private: true,
+    };
+
+    try {
+      await saveJournalEntry(userId, journalEntry);
+      setSaved(true);
+    } catch (error) {
+      console.error("Failed to save weekly reflection:", error);
+    }
   };
 
   const handleSkip = () => {
