@@ -13,9 +13,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter basename="/app/weekly-bloom">
+      <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+                    <Route path="/" element={<Index />} />
+          <Route path="/weekly-bloom" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
