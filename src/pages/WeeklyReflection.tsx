@@ -54,7 +54,7 @@ const WeeklyReflection = () => {
     <div className="max-w-xl mx-auto space-y-10 py-8 px-4 animate-in fade-in duration-700">
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider">
-          <Calendar className="w-3 h-3" />
+          <Calendar className="w-3 h-3"/>
           Weekly Bloom
         </div>
         <h1 className="text-4xl font-bold tracking-tight text-foreground">How was your week?</h1>
@@ -68,7 +68,7 @@ const WeeklyReflection = () => {
         ]?.map((item) => (
           <div key={item.label} className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
             <div className={`p-2 rounded-lg bg-muted ${item.color}`}>
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-5 h-5"/>
             </div>
             <span className="font-semibold text-sm">{item.label}</span>
           </div>
