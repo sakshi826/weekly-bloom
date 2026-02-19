@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Sparkles, TrendingUp, Calendar } from "lucide-react";
@@ -65,7 +65,7 @@ const WeeklyReflection = () => {
         {[
           { icon: Sparkles, label: "Highlights", color: "text-amber" },
           { icon: TrendingUp, label: "Growth Points", color: "text-emerald" }
-        ].map((item) => (
+        ]?.map((item) => (
           <div key={item.label} className="flex items-center gap-3 p-4 rounded-2xl bg-card border border-border">
             <div className={`p-2 rounded-lg bg-muted ${item.color}`}>
               <item.icon className="w-5 h-5" />
